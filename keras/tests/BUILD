@@ -106,7 +106,6 @@ tf_py_test(
     python_version = "PY3",
     shard_count = 16,
     tags = [
-        "no_rocm",
         "notsan",
     ],
     deps = [
@@ -230,6 +229,7 @@ tf_py_test(
     size = "small",
     srcs = ["saved_model_test.py"],
     tags = [
+        "no_oss",  # TODO(b/170766453)
         "notap",  # TODO(b/170766453)
     ],
     deps = [

@@ -1,7 +1,10 @@
 # Description:
 #   Contains the Keras engine API (internal TensorFlow version).
 
+# buildifier: disable=same-origin-load
 load("@org_keras//keras:keras.bzl", "tf_py_test")
+
+# buildifier: disable=same-origin-load
 load("@org_keras//keras:keras.bzl", "cuda_py_test")
 
 package(
@@ -319,7 +322,6 @@ tf_py_test(
     shard_count = 20,
     tags = [
         "manual",
-        "no_rocm",
         "nomac",  # TODO(mihaimaruseac): b/127695564
         "notsan",
     ],
@@ -425,7 +427,6 @@ tf_py_test(
     python_version = "PY3",
     shard_count = 30,
     tags = [
-        "no_rocm",
         "nomac",  # TODO(mihaimaruseac): b/127695564
     ],
     deps = [
@@ -514,6 +515,7 @@ tf_py_test(
     shard_count = 8,
     tags = [
         "no-internal-py3",
+        "no_rocm",
         "nomac",  # TODO(mihaimaruseac): b/127695564
     ],
     deps = [
@@ -558,7 +560,6 @@ tf_py_test(
     python_version = "PY3",
     shard_count = 8,
     tags = [
-        "no_rocm",
         "nomac",  # TODO(mihaimaruseac): b/127695564
     ],
     deps = [

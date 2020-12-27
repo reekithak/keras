@@ -290,6 +290,7 @@ tf_py_test(
         ":combinations",
         "//:expect_absl_installed",
         "//:expect_numpy_installed",
+        "//:expect_scipy_installed",
         "//:expect_tensorflow_installed",
         "//keras/layers",
         "//keras/layers:advanced_activations",
@@ -490,7 +491,6 @@ tf_py_test(
     python_version = "PY3",
     shard_count = 8,
     tags = [
-        "no_rocm",
         "notsan",  # b/67509773
     ],
     deps = [

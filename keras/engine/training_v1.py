@@ -41,6 +41,7 @@ from keras.engine import training_utils_v1
 from keras.mixed_precision import loss_scale_optimizer
 from keras.mixed_precision import policy
 from keras.optimizer_v2 import optimizer_v2
+from keras.saving import saving_utils
 from keras.saving.saved_model import model_serialization
 from keras.utils import data_utils
 from keras.utils import layer_utils
@@ -184,7 +185,7 @@ class Model(training_lib.Model):
     TensorFlow format loads based on the object-local names of attributes to
     which layers are assigned in the `Model`'s constructor.
 
-    Arguments:
+    Args:
         filepath: String, path to the weights file to load. For weight files in
             TensorFlow format, this is the file prefix (the same as was passed
             to `save_weights`).
@@ -212,7 +213,7 @@ class Model(training_lib.Model):
     """
     if distributed_training_utils.is_tpu_strategy(self._distribution_strategy):
       if (self._distribution_strategy.extended.steps_per_run > 1 and
-          (not training_lib._is_hdf5_filepath(filepath))):  # pylint: disable=protected-access
+          (not saving_utils.is_hdf5_filepath(filepath))):  # pylint: disable=protected-access
         raise ValueError('Load weights is not yet supported with TPUStrategy '
                          'with steps_per_run greater than 1.')
     return super(Model, self).load_weights(filepath, by_name, skip_mismatch)
@@ -230,7 +231,7 @@ class Model(training_lib.Model):
               **kwargs):
     """Configures the model for training.
 
-    Arguments:
+    Args:
         optimizer: String (name of optimizer) or optimizer instance.
             See `tf.keras.optimizers`.
         loss: String (name of objective function), objective function or
@@ -619,7 +620,7 @@ class Model(training_lib.Model):
           **kwargs):
     """Trains the model for a fixed number of epochs (iterations on a dataset).
 
-    Arguments:
+    Args:
         x: Input data. It could be:
           - A Numpy array (or array-like), or a list of arrays
             (in case the model has multiple inputs).
@@ -812,7 +813,7 @@ class Model(training_lib.Model):
 
     Computation is done in batches (see the `batch_size` arg.)
 
-    Arguments:
+    Args:
         x: Input data. It could be:
           - A Numpy array (or array-like), or a list of arrays
             (in case the model has multiple inputs).
@@ -916,7 +917,7 @@ class Model(training_lib.Model):
 
     Computation is done in batches (see the `batch_size` arg.)
 
-    Arguments:
+    Args:
         x: Input samples. It could be:
           - A Numpy array (or array-like), or a list of arrays
             (in case the model has multiple inputs).
@@ -998,7 +999,7 @@ class Model(training_lib.Model):
                      reset_metrics=True):
     """Runs a single gradient update on a single batch of data.
 
-    Arguments:
+    Args:
         x: Input data. It could be:
           - A Numpy array (or array-like), or a list of arrays
               (in case the model has multiple inputs).
@@ -1087,7 +1088,7 @@ class Model(training_lib.Model):
   def test_on_batch(self, x, y=None, sample_weight=None, reset_metrics=True):
     """Test the model on a single batch of samples.
 
-    Arguments:
+    Args:
         x: Input data. It could be:
           - A Numpy array (or array-like), or a list of arrays
             (in case the model has multiple inputs).
@@ -1163,7 +1164,7 @@ class Model(training_lib.Model):
   def predict_on_batch(self, x):
     """Returns predictions for a single batch of samples.
 
-    Arguments:
+    Args:
         x: Input data. It could be:
           - A Numpy array (or array-like), or a list of arrays
             (in case the model has multiple inputs).
@@ -1552,7 +1553,7 @@ class Model(training_lib.Model):
   def _prepare_total_loss(self, masks):
     """Computes total loss from loss functions.
 
-    Arguments:
+    Args:
         masks: List of mask values corresponding to each model output.
 
     Returns:
@@ -1678,7 +1679,7 @@ class Model(training_lib.Model):
     raised if `x` is a tf.data.Dataset and `batch_size` is specified as we
     expect users to provide batched datasets.
 
-    Arguments:
+    Args:
       batch_size: The batch_size provided as an argument to
         fit/evaluate/predict.
       steps: The steps provided as an argument to fit/evaluate/predict.
@@ -1797,7 +1798,7 @@ class Model(training_lib.Model):
       If there are multiple outputs for which the metrics are calculated, the
       metric names have to be made unique by appending an integer.
 
-    Arguments:
+    Args:
       metric_name: Metric name that corresponds to the metric specified by the
           user. For example: 'acc'.
       output_index: The index of the model output for which the metric name is
@@ -1825,7 +1826,7 @@ class Model(training_lib.Model):
   def _set_per_output_metric_attributes(self, metrics_dict, output_index):
     """Sets the metric attributes on the model for the given output.
 
-    Arguments:
+    Args:
       metrics_dict: A dict with metric names as keys and metric fns as values.
       output_index: The index of the model output for which the metric
         attributes are added.
@@ -1881,7 +1882,7 @@ class Model(training_lib.Model):
                                  weights=None):
     """Calls metric functions for a single output.
 
-    Arguments:
+    Args:
       metrics_dict: A dict with metric names as keys and metric fns as values.
       y_true: Target output.
       y_pred: Predicted output.
@@ -1909,7 +1910,7 @@ class Model(training_lib.Model):
                       return_weighted_and_unweighted_metrics=False):
     """Handles calling metric functions.
 
-    Arguments:
+    Args:
       outputs: List of outputs (predictions).
       targets: List of targets.
       skip_target_masks: Optional. List of boolean for whether the corresponding
@@ -2739,7 +2740,7 @@ class Model(training_lib.Model):
     Refer to tensorflow/python/keras/distribute/worker_training_state.py
     for more information.
 
-    Arguments:
+    Args:
       initial_epoch: The original initial_epoch user passes in in `fit()`.
       mode: The mode for running `model.fit()`.
 
@@ -3093,7 +3094,7 @@ class _TrainingEndpoint(object):
 class _TrainingTarget(object):
   """Container for a target tensor (y_true) and its metadata (shape, loss...).
 
-  Arguments:
+  Args:
     target: A target tensor for the model. It may be `None` if the
       output is excluded from loss computation. It is still kept as None
       since each output of the model should have a corresponding target. If
@@ -3137,7 +3138,7 @@ def _convert_scipy_sparse_tensor(value, expected_input):
   not a scipy sparse tensor, or scipy is not imported, we pass it through
   unchanged.
 
-  Arguments:
+  Args:
     value: An object that may be a scipy sparse tensor
     expected_input: The expected input placeholder.
 
@@ -3168,7 +3169,7 @@ def _get_metrics_from_layers(layers):
 
   This will not include the `compile` metrics of a model layer.
 
-  Arguments:
+  Args:
     layers: List of layers.
 
   Returns:
