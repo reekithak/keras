@@ -33,7 +33,6 @@ from keras import backend
 from keras import callbacks as callbacks_module
 from keras import optimizer_v1
 from keras import optimizers
-from keras.distribute import distributed_training_utils as dist_utils
 from keras.engine import base_layer
 from keras.engine import base_layer_utils
 from keras.engine import compile_utils
@@ -54,7 +53,6 @@ from keras.utils import version_utils
 from keras.utils.io_utils import ask_to_proceed_with_overwrite
 from keras.utils.io_utils import path_to_string
 from keras.utils.mode_keys import ModeKeys
-from tensorflow.python.ops import summary_ops_v2
 from tensorflow.python.platform import tf_logging as logging
 from tensorflow.python.training import checkpoint_management
 from tensorflow.python.training.tracking import base as trackable
@@ -928,7 +926,8 @@ class Model(base_layer.Layer, version_utils.ModelVersionSelector):
             are supported in `x`, eg, dict, generator or `keras.utils.Sequence`.
         shuffle: Boolean (whether to shuffle the training data
             before each epoch) or str (for 'batch'). This argument is ignored
-            when `x` is a generator. 'batch' is a special option for dealing
+            when `x` is a generator or an object of tf.data.Dataset.
+            'batch' is a special option for dealing
             with the limitations of HDF5 data; it shuffles in batch-sized
             chunks. Has no effect when `steps_per_epoch` is not `None`.
         class_weight: Optional dictionary mapping class indices (integers)
@@ -2199,7 +2198,7 @@ class Model(base_layer.Layer, version_utils.ModelVersionSelector):
         ValueError: If `skip_mismatch` is set to `True` when `by_name` is
           `False`.
     """
-    if dist_utils.is_tpu_strategy(self._distribution_strategy):
+    if backend.is_tpu_strategy(self._distribution_strategy):
       if (self._distribution_strategy.extended.steps_per_run > 1 and
           (not saving_utils.is_hdf5_filepath(filepath))):
         raise ValueError('Load weights is not yet supported with TPUStrategy '
@@ -2721,7 +2720,7 @@ def concat(tensors, axis=0):
 
 
 def _is_tpu_multi_host(strategy):
-  return (dist_utils.is_tpu_strategy(strategy) and
+  return (backend.is_tpu_strategy(strategy) and
           strategy.extended.num_hosts > 1)
 
 
@@ -2750,24 +2749,19 @@ def _collective_all_reduce_multi_worker(strategy):
 # for all strategies
 def _multi_worker_concat(v, strategy):
   """Order PerReplica objects for CollectiveAllReduceStrategy and concat."""
-  replicas = strategy.gather(v, axis=0)  # pylint: disable=protected-access
-  # TODO(b/170435030): We now need to make sure these run after the iterator
-  # GetNext, so that we don't trigger aborting collective ops in the case of
-  # EOF. Remove after the issue is fixed.
-  with tf.control_dependencies([replicas]):
-    # v might not have the same shape on different replicas
-    if isinstance(v, ds_values.PerReplica):
-      shapes = tf.concat([
-          tf.expand_dims(tf.compat.v1.shape(single_value)[0], axis=0)
-          for single_value in v.values
-      ],
-                                axis=0)
-      all_shapes = strategy.gather(shapes, axis=0)
-    else:
-      # v is a tensor. This may happen when, say, we have 2x1 multi-worker.
-      all_shapes = strategy.gather(
-          tf.expand_dims(tf.compat.v1.shape(v)[0], axis=0),
-          axis=0)
+  replicas = strategy.gather(v, axis=0)
+  # v might not have the same shape on different replicas
+  if isinstance(v, ds_values.PerReplica):
+    shapes = tf.concat([
+        tf.expand_dims(tf.compat.v1.shape(single_value)[0], axis=0)
+        for single_value in v.values
+    ],
+                              axis=0)
+    all_shapes = strategy.gather(shapes, axis=0)
+  else:
+    # v is a tensor. This may happen when, say, we have 2x1 multi-worker.
+    all_shapes = strategy.gather(
+        tf.expand_dims(tf.compat.v1.shape(v)[0], axis=0), axis=0)
 
   replicas = tf.split(
       replicas,
@@ -2787,7 +2781,7 @@ def _is_scalar(x):
 def write_scalar_summaries(logs, step):
   for name, value in logs.items():
     if _is_scalar(value):
-      summary_ops_v2.scalar('batch_' + name, value, step=step)
+      tf.summary.scalar('batch_' + name, value, step=step)
 
 
 def _minimum_control_deps(outputs):

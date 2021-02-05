@@ -29,7 +29,7 @@ py_library(
         "distributed_training_utils.py",
         "distributed_training_utils_v1.py",
     ],
-    srcs_version = "PY2AND3",
+    srcs_version = "PY3",
     deps = [
         ":sidecar_evaluator",
         "//:expect_tensorflow_installed",
@@ -52,6 +52,7 @@ py_library(
 
 py_library(
     name = "distribute_test_lib_pip",
+    srcs_version = "PY3",
     deps = [
         ":distribute_strategy_test_lib",
         ":keras_correctness_test_lib",
@@ -66,7 +67,7 @@ py_library(
 py_library(
     name = "optimizer_combinations",
     srcs = ["optimizer_combinations.py"],
-    srcs_version = "PY2AND3",
+    srcs_version = "PY3",
     deps = [
         "//:expect_tensorflow_installed",
         "//keras/optimizer_v2",
@@ -78,7 +79,7 @@ py_library(
     srcs = [
         "worker_training_state.py",
     ],
-    srcs_version = "PY2AND3",
+    srcs_version = "PY3",
     deps = [
         ":distributed_file_utils",
         "//:expect_tensorflow_installed",
@@ -90,12 +91,13 @@ py_library(
 py_library(
     name = "model_collection_base",
     srcs = ["model_collection_base.py"],
+    srcs_version = "PY3",
 )
 
 py_library(
     name = "model_combinations",
     srcs = ["model_combinations.py"],
-    srcs_version = "PY2AND3",
+    srcs_version = "PY3",
     deps = [
         ":simple_models",
         "//:expect_tensorflow_installed",
@@ -105,6 +107,7 @@ py_library(
 py_library(
     name = "simple_models",
     srcs = ["simple_models.py"],
+    srcs_version = "PY3",
     deps = [
         ":model_collection_base",
         "//:expect_tensorflow_installed",
@@ -115,6 +118,7 @@ py_library(
 py_library(
     name = "saved_model_test_base",
     srcs = ["saved_model_test_base.py"],
+    srcs_version = "PY3",
     deps = [
         ":model_combinations",
         "//:expect_numpy_installed",
@@ -198,6 +202,7 @@ distribute_py_test(
     main = "custom_training_loop_metrics_test.py",
     tags = [
         "multi_and_single_gpu",
+        "no_rocm",
         "nomultivm",  # TODO(b/170502145)
     ],
     deps = [
@@ -216,6 +221,7 @@ distribute_py_test(
     tags = [
         "multi_and_single_gpu",
         "no_cuda_asan",  # times out
+        "no_rocm",
         "nomultivm",  # TODO(b/170502145)
         "notsan",  # TODO(b/170954243)
     ],
@@ -254,6 +260,7 @@ py_library(
     srcs = [
         "distribute_strategy_test.py",
     ],
+    srcs_version = "PY3",
     deps = [
         ":optimizer_combinations",
         ":strategy_combinations",
@@ -336,6 +343,7 @@ py_library(
         "keras_rnn_model_correctness_test.py",
         "keras_stateful_lstm_model_correctness_test.py",
     ],
+    srcs_version = "PY3",
     deps = [
         ":strategy_combinations",
         "//:expect_absl_installed",
@@ -361,6 +369,7 @@ distribute_py_test(
         "no_oss",  # TODO(b/173021094)
         "no_rocm",  # times out on ROCm
         "no_windows_gpu",
+        "noasan",  # TODO(b/178803051)
         "nogpu",  # TODO(b/170905292)
         "nomultivm",  # TODO(b/170502145)
         "notsan",
@@ -460,6 +469,7 @@ distribute_py_test(
     shard_count = 31,
     tags = [
         "multi_and_single_gpu",
+        "no_rocm",
         "no_windows_gpu",
         "noasan",  # TODO(b/337374867) fails with -fsanitize=null
         "nomultivm",  # TODO(b/170502145)
@@ -481,6 +491,7 @@ distribute_py_test(
     shard_count = 7,
     tags = [
         "multi_and_single_gpu",
+        "no_rocm",
         "nomultivm",  # TODO(b/170502145)
     ],
     deps = [
@@ -538,6 +549,7 @@ py_library(
     srcs = [
         "keras_utils_test.py",
     ],
+    srcs_version = "PY3",
     deps = [
         "//:expect_absl_installed",
         "//:expect_numpy_installed",
@@ -652,6 +664,7 @@ py_library(
     srcs = [
         "multi_worker_testing_utils.py",
     ],
+    srcs_version = "PY3",
     deps = [
         "//:expect_tensorflow_installed",
         "//keras",
@@ -662,7 +675,7 @@ py_library(
 py_library(
     name = "tpu_strategy_test_utils",
     srcs = ["tpu_strategy_test_utils.py"],
-    srcs_version = "PY2AND3",
+    srcs_version = "PY3",
     deps = [
         "//:expect_tensorflow_installed",
     ],
@@ -721,6 +734,7 @@ py_library(
     srcs = [
         "distributed_file_utils.py",
     ],
+    srcs_version = "PY3",
     deps = [
         "//:expect_tensorflow_installed",
     ],
@@ -772,6 +786,7 @@ tf_py_test(
 py_library(
     name = "strategy_combinations",
     srcs = ["strategy_combinations.py"],
+    srcs_version = "PY3",
     deps = [
         "//:expect_tensorflow_installed",
     ],
@@ -780,6 +795,7 @@ py_library(
 py_library(
     name = "test_example",
     srcs = ["test_example.py"],
+    srcs_version = "PY3",
     deps = [
         "//:expect_tensorflow_installed",
     ],

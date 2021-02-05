@@ -29,6 +29,7 @@ import io
 import json
 import os
 import re
+import sys
 import time
 
 import numpy as np
@@ -44,7 +45,6 @@ from keras.utils.data_utils import Sequence
 from keras.utils.generic_utils import Progbar
 from keras.utils.io_utils import path_to_string
 from keras.utils.mode_keys import ModeKeys
-from tensorflow.python.ops import summary_ops_v2
 from tensorflow.python.platform import tf_logging as logging
 from tensorflow.python.util.tf_export import keras_export
 from tensorflow.tools.docs import doc_controls
@@ -653,7 +653,8 @@ class Callback(object):
         logs: Dict, metric results for this training epoch, and for the
           validation epoch if validation is performed. Validation result keys
           are prefixed with `val_`. For training epoch, the values of the
-         `Model`'s metrics are returned. Example : `{'loss': 0.2, 'acc': 0.7}`.
+         `Model`'s metrics are returned. Example : `{'loss': 0.2, 'accuracy':
+           0.7}`.
     """
 
   @doc_controls.for_subclass_implementers
@@ -1235,7 +1236,7 @@ class ModelCheckpoint(Callback):
           options, tf.train.CheckpointOptions):
         self._options = options or tf.train.CheckpointOptions()
       else:
-        raise TypeError('If save_weights_only is True, then `options` must be'
+        raise TypeError('If save_weights_only is True, then `options` must be '
                         'either None or a tf.train.CheckpointOptions')
     else:
       if options is None or isinstance(options, tf.saved_model.SaveOptions):
@@ -2255,35 +2256,24 @@ class TensorBoard(Callback, version_utils.TensorBoardVersionSelector):
     if self.update_freq == 'epoch':
       return
 
-    summary_state = summary_ops_v2._summary_state  # pylint: disable=protected-access
-    self._prev_summary_state.append({
-        'is_recording': summary_state.is_recording,
-        'writer': summary_state.writer,
-        'step': summary_state.step
-    })
-
-    if self.update_freq == 'epoch':
-      should_record = False
-      writer = None
-    else:
-      should_record = lambda: tf.equal(step % self.update_freq, 0)
-
-    summary_state.is_recording = should_record
-    summary_state.writer = writer
+    should_record = lambda: tf.equal(step % self.update_freq, 0)
     # TODO(b/151339474): Fix deadlock when not using .value() here.
-    tf.summary.experimental.set_step(step.value())
+    summary_context = (writer.as_default(step.value()),
+                       tf.summary.record_if(should_record))
+    self._prev_summary_state.append(summary_context)
+    summary_context[0].__enter__()
+    summary_context[1].__enter__()
 
   def _pop_writer(self):
     """Pops the current writer."""
     if self.update_freq == 'epoch':
       return
 
-    prev_state = self._prev_summary_state.pop()
-
-    summary_state = summary_ops_v2._summary_state  # pylint: disable=protected-access
-    summary_state.is_recording = prev_state['is_recording']
-    summary_state.writer = prev_state['writer']
-    tf.summary.experimental.set_step(prev_state['step'])
+    # See _push_writer for the content of the previous_context, which is pair
+    # of context.
+    previous_context = self._prev_summary_state.pop()
+    previous_context[1].__exit__(*sys.exc_info())
+    previous_context[0].__exit__(*sys.exc_info())
 
   def _close_writers(self):
     for writer in self._writers.values():
@@ -2379,7 +2369,7 @@ class TensorBoard(Callback, version_utils.TensorBoardVersionSelector):
     if self.write_steps_per_second:
       batch_run_time = time.time() - self._batch_start_time
       self._train_accumulated_time += batch_run_time
-      summary_ops_v2.scalar('batch_steps_per_second', 1. / batch_run_time)
+      tf.summary.scalar('batch_steps_per_second', 1. / batch_run_time)
     if not self._should_trace:
       return
 
@@ -2451,12 +2441,12 @@ class TensorBoard(Callback, version_utils.TensorBoardVersionSelector):
       if train_logs:
         with self._train_writer.as_default():
           for name, value in train_logs.items():
-            summary_ops_v2.scalar('epoch_' + name, value, step=epoch)
+            tf.summary.scalar('epoch_' + name, value, step=epoch)
       if val_logs:
         with self._val_writer.as_default():
           for name, value in val_logs.items():
             name = name[4:]  # Remove 'val_' prefix.
-            summary_ops_v2.scalar('epoch_' + name, value, step=epoch)
+            tf.summary.scalar('epoch_' + name, value, step=epoch)
 
   def _log_weights(self, epoch):
     """Logs the weights of the Model to TensorBoard."""
@@ -2465,7 +2455,7 @@ class TensorBoard(Callback, version_utils.TensorBoardVersionSelector):
         for layer in self.model.layers:
           for weight in layer.weights:
             weight_name = weight.name.replace(':', '_')
-            summary_ops_v2.histogram(weight_name, weight, step=epoch)
+            tf.summary.histogram(weight_name, weight, step=epoch)
             if self.write_images:
               self._log_weight_as_image(weight, weight_name, epoch)
         self._train_writer.flush()
@@ -2492,7 +2482,7 @@ class TensorBoard(Callback, version_utils.TensorBoardVersionSelector):
     shape = K.int_shape(w_img)
     # Not possible to handle 3D convnets etc.
     if len(shape) == 4 and shape[-1] in [1, 3, 4]:
-      summary_ops_v2.image(weight_name, w_img, step=epoch)
+      tf.summary.image(weight_name, w_img, step=epoch)
 
   def _log_embeddings(self, epoch):
     embeddings_ckpt = os.path.join(self._log_write_dir, 'train',

@@ -51,7 +51,6 @@ from keras.utils import tf_utils
 from keras.utils.mode_keys import ModeKeys
 from tensorflow.python.platform import tf_logging as logging
 from tensorflow.python.training.tracking import base as trackable
-from tensorflow.python.types import core
 
 try:
   from scipy.sparse import issparse  # pylint: disable=g-import-not-at-top
@@ -211,7 +210,7 @@ class Model(training_lib.Model):
         ValueError: If `skip_mismatch` is set to `True` when `by_name` is
           `False`.
     """
-    if distributed_training_utils.is_tpu_strategy(self._distribution_strategy):
+    if K.is_tpu_strategy(self._distribution_strategy):
       if (self._distribution_strategy.extended.steps_per_run > 1 and
           (not saving_utils.is_hdf5_filepath(filepath))):  # pylint: disable=protected-access
         raise ValueError('Load weights is not yet supported with TPUStrategy '
@@ -2120,8 +2119,7 @@ class Model(training_lib.Model):
                                 'when using tf.distribute.Strategy.')
 
     if (sample_weight is not None and sample_weight.all() and
-        distributed_training_utils.is_tpu_strategy(
-            self._distribution_strategy)):
+        K.is_tpu_strategy(self._distribution_strategy)):
       raise NotImplementedError('`sample_weight` is currently not supported '
                                 'when using TPUStrategy.')
 
@@ -2175,8 +2173,7 @@ class Model(training_lib.Model):
         # TODO(b/131720208): We still drop remainder here if number of examples
         # is divisible by batch size, as sometimes dynamic padder will time out
         # with keras.metrics.CategoricalAccuracy() metric.
-        if distributed_training_utils.is_tpu_strategy(
-            strategy) and not drop_remainder:
+        if K.is_tpu_strategy(strategy) and not drop_remainder:
           dataset_size = first_x_value.shape[0]
           if dataset_size % batch_size == 0:
             drop_remainder = True
@@ -3146,20 +3143,20 @@ def _convert_scipy_sparse_tensor(value, expected_input):
     The possibly-converted 'value'.
   """
   if issparse is not None and issparse(value):
-    if isinstance(expected_input, core.Tensor):
-      if tf.compat.v1.executing_eagerly_outside_functions():
-        # In TF2 we do not silently densify sparse matrices.
-        raise ValueError('A SciPy sparse matrix was passed to a model '
-                         'that expects dense inputs. Please densify your '
-                         'inputs first, such as by calling `x.toarray().')
-      return value.toarray()
-    else:
+    if K.is_sparse(expected_input):
       sparse_coo = value.tocoo()
       row, col = sparse_coo.row, sparse_coo.col
       data, shape = sparse_coo.data, sparse_coo.shape
       indices = np.concatenate((np.expand_dims(row, 1), np.expand_dims(col, 1)),
                                1)
       return tf.SparseTensor(indices, data, shape)
+    else:
+      if tf.compat.v1.executing_eagerly_outside_functions():
+        # In TF2 we do not silently densify sparse matrices.
+        raise ValueError('A SciPy sparse matrix was passed to a model '
+                         'that expects dense inputs. Please densify your '
+                         'inputs first, such as by calling `x.toarray().')
+      return value.toarray()
   else:
     return value
 

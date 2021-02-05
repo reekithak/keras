@@ -22,7 +22,6 @@ from __future__ import print_function
 import tensorflow as tf
 
 import re
-from tensorflow.python.ops import summary_ops_v2
 from tensorflow.python.platform import tf_logging as logging
 
 _PRINT_EVAL_STEP_EVERY_SEC = 60.0
@@ -206,16 +205,17 @@ class SidecarEvaluator(object):
       # TODO(rchao): Support arbitrary callback for extensibility.
       self.model.evaluate(self.data, steps=self.steps)
 
-      logging.info('End of evaluation. Accuracy: %r', [
-          metric.result().numpy()
-          for metric in self.model.compiled_metrics.metrics
-      ])
+      logging.info(
+          'End of evaluation. Metrics: %s', ' '.join([
+              '{}={}'.format(metric.name,
+                             metric.result().numpy())
+              for metric in self.model.metrics
+          ]))
 
       if self._summary_writer:
-        with summary_ops_v2.always_record_summaries(
-        ), self._summary_writer.as_default():
-          for metric in self.model.compiled_metrics.metrics:
-            summary_ops_v2.scalar(
+        with tf.summary.record_if(True), self._summary_writer.as_default():
+          for metric in self.model.metrics:
+            tf.summary.scalar(
                 metric.name,
                 metric.result(),
                 step=self._iterations.read_value())

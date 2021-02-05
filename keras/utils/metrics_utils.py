@@ -25,11 +25,10 @@ import functools
 import weakref
 
 from enum import Enum
+from keras import backend
 from keras.utils import losses_utils
 from keras.utils import tf_utils
 from keras.utils.generic_utils import to_list
-from tensorflow.python.ops import control_flow_ops
-from tensorflow.python.tpu import tpu
 
 NEG_INF = -1e10
 
@@ -67,7 +66,7 @@ def update_state_wrapper(update_state_fn):
     # replica.
 
     for weight in metric_obj.weights:
-      if (tpu.is_tpu_strategy(strategy) and
+      if (backend.is_tpu_strategy(strategy) and
           not strategy.extended.variable_created_in_scope(weight)
           and not tf.distribute.in_cross_replica_context()):
         raise ValueError(
@@ -508,16 +507,14 @@ def ragged_assert_compatible_and_get_flat_values(values, mask=None):
     if isinstance(mask, tf.RaggedTensor):
       assertion_list_for_mask = _assert_splits_match(
           [nested_row_split_list[0], mask.nested_row_splits])
-      tmp = control_flow_ops.with_dependencies(assertion_list_for_mask,
-                                               mask.flat_values)
-      mask = tf.compat.v1.expand_dims(tmp, -1)
+      with tf.control_dependencies(assertion_list_for_mask):
+        mask = tf.compat.v1.expand_dims(mask.flat_values, -1)
 
     # values has at least 1 element.
     flat_values = []
     for value in values:
-      tmp = control_flow_ops.with_dependencies(assertion_list,
-                                               value.flat_values)
-      flat_values.append(tf.compat.v1.expand_dims(tmp, -1))
+      with tf.control_dependencies(assertion_list):
+        flat_values.append(tf.compat.v1.expand_dims(value.flat_values, -1))
 
     values = flat_values[0] if to_be_stripped else flat_values
 
