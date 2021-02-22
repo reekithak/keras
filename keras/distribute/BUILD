@@ -369,9 +369,9 @@ distribute_py_test(
         "no_oss",  # TODO(b/173021094)
         "no_rocm",  # times out on ROCm
         "no_windows_gpu",
-        "noasan",  # TODO(b/178803051)
         "nogpu",  # TODO(b/170905292)
         "nomultivm",  # TODO(b/170502145)
+        "notap",  # TODO(b/178803051): flaky
         "notsan",
     ],
     deps = [
@@ -599,12 +599,14 @@ cuda_py_test(
     python_version = "PY3",
     tags = [
         "multi_and_single_gpu",
+        "no_tfrt",  # TODO(b/179839466): Reenable TFRT after the issue is resolved.
         "no_windows_gpu",  # TODO(b/130551176)
     ],
     deps = [
         "//:expect_tensorflow_installed",
         "//keras/engine",
         "//keras/layers:core",
+        "//keras/utils:kpl_test_utils",
     ],
 )
 
@@ -722,10 +724,14 @@ tf_py_test(
     srcs = ["parameter_server_training_test.py"],
     python_version = "PY3",
     shard_count = 1,
+    tags = [
+        "no_tfrt",  # TODO(b/180537361): Reenable TFRT after the issue is resolved.
+    ],
     deps = [
         "//:expect_portpicker_installed",
         "//:expect_tensorflow_installed",
         "//keras",
+        "//keras/utils:dataset_creator",
     ],
 )
 
@@ -756,6 +762,7 @@ py_library(
     srcs = ["sidecar_evaluator.py"],
     srcs_version = "PY3",
     deps = [
+        "//:expect_tensorboard_installed",
         "//:expect_tensorflow_installed",
     ],
 )

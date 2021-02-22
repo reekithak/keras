@@ -18,7 +18,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import tensorflow as tf
+import tensorflow.compat.v2 as tf
 
 import collections.abc as collections_abc
 import functools
@@ -417,7 +417,7 @@ def run_all_keras_modes(test_or_class=None,
 def _v1_session_test(f, test_or_class, config, *args, **kwargs):
   with tf.compat.v1.get_default_graph().as_default():
     with testing_utils.run_eagerly_scope(False):
-      with test_or_class.test_session(use_gpu=True, config=config):
+      with test_or_class.test_session(config=config):
         f(test_or_class, *args, **kwargs)
 
 

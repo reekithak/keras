@@ -18,7 +18,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import tensorflow as tf
+import tensorflow.compat.v2 as tf
 
 import numpy as np
 from keras import backend as K
@@ -103,9 +103,9 @@ class TextVectorization(base_preprocessing_layer.CombinerPreprocessingLayer):
        `[["string to split"], ["another string to split"]]`, the Callable will
        see `["string to split", "another string to split"]`. The callable should
        return a Tensor with the first dimension containing the split tokens -
-       in this example, we should see something like `[["string", "to", "split],
-       ["another", "string", "to", "split"]]`. This makes the callable site
-       natively compatible with `tf.strings.split()`.
+       in this example, we should see something like `[["string", "to",
+       "split"], ["another", "string", "to", "split"]]`. This makes the callable
+       site natively compatible with `tf.strings.split()`.
 
   Args:
     max_tokens: The maximum size of the vocabulary for this layer. If None,

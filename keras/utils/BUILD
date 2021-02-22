@@ -9,6 +9,7 @@ package(
     default_visibility = [
         "//keras:__subpackages__",
         "//third_party/tensorflow/python/feature_column:__pkg__",
+        "//third_party/tensorflow/tools/pip_package:__pkg__",
     ],
     licenses = ["notice"],  # Apache 2.0
 )
@@ -51,7 +52,19 @@ py_library(
     name = "control_flow_util",
     srcs = ["control_flow_util.py"],
     srcs_version = "PY3",
-    deps = [],
+    deps = [
+        "//:expect_tensorflow_installed",
+    ],
+)
+
+py_library(
+    name = "kpl_test_utils",
+    srcs = ["kpl_test_utils.py"],
+    srcs_version = "PY3",
+    deps = [
+        "//keras",
+        "//keras/layers/preprocessing:string_lookup",
+    ],
 )
 
 py_library(
@@ -230,7 +243,6 @@ py_library(
         "dataset_creator.py",
     ],
     srcs_version = "PY3",
-    visibility = ["//keras:__subpackages__"],
     deps = [
         "//:expect_tensorflow_installed",
     ],
@@ -240,8 +252,12 @@ tf_py_test(
     name = "dataset_creator_test",
     srcs = ["dataset_creator_test.py"],
     python_version = "PY3",
+    tags = [
+        "no_tfrt",  # TODO(b/180537361): Reenable TFRT after the issue is resolved.
+    ],
     deps = [
         ":dataset_creator",
+        "//:expect_portpicker_installed",
         "//:expect_tensorflow_installed",
         "//keras/engine",
         "//keras/layers:core",

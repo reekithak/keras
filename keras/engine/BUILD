@@ -52,6 +52,7 @@ py_library(
         ":node",
         "//:expect_h5py_installed",
         "//:expect_six_installed",
+        "//:expect_tensorboard_installed",
         "//:expect_tensorflow_installed",
         "//:expect_yaml_installed",
         "//keras:activations",
@@ -69,6 +70,7 @@ py_library(
         "//keras/mixed_precision:loss_scale_optimizer",
         "//keras/mixed_precision:policy",
         "//keras/saving",
+        "//keras/utils:control_flow_util",
         "//keras/utils:engine_utils",
         "//keras/utils:metrics_utils",
         "//keras/utils:mode_keys",
@@ -127,6 +129,8 @@ py_library(
     srcs_version = "PY3",
     deps = [
         "//:expect_tensorflow_installed",
+        "//keras/utils:control_flow_util",
+        "//keras/utils:dataset_creator",
         "//keras/utils:engine_utils",
         "//keras/utils:tf_utils",
     ],
@@ -205,6 +209,7 @@ tf_py_test(
     shard_count = 4,
     tags = [
         "no_oss_py38",  # TODO(b/150615192)
+        "no_tfrt",  # TODO(b/179805675)
         "nomac",  # TODO(mihaimaruseac): b/127695564
     ],
     deps = [
@@ -365,6 +370,7 @@ tf_py_test(
     python_version = "PY3",
     shard_count = 4,
     tags = [
+        "no_tfrt",  # TODO(b/179459136)
         "nomac",  # TODO(mihaimaruseac): b/127695564
     ],
     deps = [
@@ -566,6 +572,7 @@ tf_py_test(
         ":base_layer",
         ":engine",
         "//:expect_numpy_installed",
+        "//:expect_tensorboard_installed",
         "//:expect_tensorflow_installed",
         "//keras",
         "//keras:backend",

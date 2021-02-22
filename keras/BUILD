@@ -34,6 +34,11 @@ py_library(
         "keras_parameterized.py",
     ],
     srcs_version = "PY3",
+    visibility = [
+        ":__subpackages__",
+        "//third_party/py/tensorflow:__subpackages__",
+        "//third_party/tensorflow_estimator:__subpackages__",
+    ],
     deps = [
         ":backend",
         ":engine",
@@ -130,6 +135,7 @@ py_library(
     srcs_version = "PY3",
     deps = [
         ":backend",
+        "//:expect_tensorboard_installed",
         "//:expect_tensorflow_installed",
         "//keras/distribute:distributed_file_utils",
         "//keras/distribute:worker_training_state",
@@ -159,6 +165,7 @@ py_library(
     srcs_version = "PY3",
     deps = [
         ":backend",
+        "//:expect_tensorboard_installed",
         "//:expect_tensorflow_installed",
         "//keras/utils:engine_utils",
     ],
@@ -200,6 +207,7 @@ py_library(
     srcs_version = "PY3",
     deps = [
         ":backend",
+        "//keras/utils:control_flow_util",
         "//keras/utils:engine_utils",
     ],
 )
@@ -474,6 +482,7 @@ tf_py_test(
     shard_count = 6,
     tags = [
         "no_oss",
+        "no_tfrt",  # TODO(b/179690526)
         "notsan",
     ],
     deps = [

@@ -17,7 +17,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import tensorflow as tf
+import tensorflow.compat.v2 as tf
 
 import abc
 import collections
@@ -26,7 +26,6 @@ import numpy as np
 import six
 
 from tensorflow.python.eager import context
-from tensorflow.python.eager import monitoring
 from keras import backend as K
 from keras.engine import data_adapter
 from keras.engine.base_layer import Layer
@@ -35,7 +34,7 @@ from tensorflow.python.training.tracking import base as trackable
 from tensorflow.python.util.tf_export import keras_export
 
 
-keras_kpl_gauge = monitoring.BoolGauge(
+keras_kpl_gauge = tf.__internal__.monitoring.BoolGauge(
     '/tensorflow/api/oss-keras/layers/preprocessing',
     'keras preprocessing layers usage', 'method')
 
